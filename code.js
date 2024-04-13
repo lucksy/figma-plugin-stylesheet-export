@@ -59,7 +59,6 @@ function getClassNames(node) {
     return generateFallbackClassName(node);
   }
 
-  // Construct the selector based on available attributes
   let selector = tagsAndAttributes.tag || '';
   if (tagsAndAttributes.attributes) {
     if (tagsAndAttributes.attributes.id) {
@@ -73,13 +72,10 @@ function getClassNames(node) {
 }
 
 function generateFallbackClassName(node) {
-  // Generate a base class name by normalizing node.name and node.id
   let className = `.figma-${node.name}-${node.id}`;
-  
-  // Replace all non-alphanumeric characters with hyphens and convert to lowercase
+
   className = className.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
   
-  // Ensure the className starts with a dot and not a hyphen
   if (className[0] === '-') {
       className = '.' + className.slice(1);
   }
