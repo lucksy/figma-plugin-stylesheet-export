@@ -26,11 +26,9 @@ function traverseAggCSS(nodes, stylesheet, lineage) {
   return Promise.all(
     nodes.map(async (node) => {
       const css = await node.getCSSAsync();
-      const className = `figma-${node.name}-${node.id}`
-        .replace(/[^a-zA-Z0-9]+/g, "-")
-        .toLowerCase();
+      const className = getClassNames(node);
       const lineageNew = [...lineage];
-      lineageNew.push(`.${className}`);
+      lineageNew.push(`${className}`);
       const entries = Object.entries(css);
       if (entries.length) {
         const selector = `${lineageNew.join(" > ")} {`;
@@ -47,4 +45,44 @@ function traverseAggCSS(nodes, stylesheet, lineage) {
       return;
     })
   );
+}
+
+function getClassNames(node) {
+  let tagsAndAttributes
+  try {
+    tagsAndAttributes = JSON.parse(node.getSharedPluginData('figma.attributes', 'attributes'));
+  } catch (error) {
+    return generateFallbackClassName(node);
+  }
+  
+  if (!tagsAndAttributes || Object.keys(tagsAndAttributes).length === 0) {
+    return generateFallbackClassName(node);
+  }
+
+  // Construct the selector based on available attributes
+  let selector = tagsAndAttributes.tag || '';
+  if (tagsAndAttributes.attributes) {
+    if (tagsAndAttributes.attributes.id) {
+      selector += `#${tagsAndAttributes.attributes.id}`;
+    }
+    if (tagsAndAttributes.attributes.class) {
+      selector += tagsAndAttributes.attributes.class.split(' ').map(cls => `.${cls}`).join('');
+    }
+  }
+  return selector;
+}
+
+function generateFallbackClassName(node) {
+  // Generate a base class name by normalizing node.name and node.id
+  let className = `.figma-${node.name}-${node.id}`;
+  
+  // Replace all non-alphanumeric characters with hyphens and convert to lowercase
+  className = className.replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase();
+  
+  // Ensure the className starts with a dot and not a hyphen
+  if (className[0] === '-') {
+      className = '.' + className.slice(1);
+  }
+
+  return className;
 }
